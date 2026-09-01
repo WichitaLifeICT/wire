@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Wire — Wichita triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#152742; --red:#dc5b5e; --blue:#3c67b1; --yellow:#fcc172; --sky:#6aa1d6;
+  --paper:#eef1f6; --card:#fff; --ink:#152742; --muted:#66748c; --line:#dfe5ee;
+  --display:'Poppins','Trebuchet MS',sans-serif;
+  --body:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+a{color:inherit}
+button{font-family:inherit}
+
+.masthead{background:var(--navy);color:#fff;padding:16px 24px 14px}
+.masthead-in{max-width:1280px;margin:0 auto;display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between}
+.wordmark{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em;margin:0}
+.wordmark span{color:var(--yellow)}
+.standfirst{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:#9fb2cc}
+.health{display:flex;flex-wrap:wrap;gap:5px;margin:11px auto 0;max-width:1280px}
+.dot{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.09);color:#c3d1e4}
+.dot.down{background:rgba(220,91,94,.22);color:#ffc7c8}
+
+.controls{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--line);padding:11px 24px}
+.controls-in{max-width:1280px;margin:0 auto;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+#search{flex:1;min-width:200px;font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.pill{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer}
+.pill:hover{border-color:var(--sky)}
+.pill[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+.wrap{max-width:1280px;margin:0 auto;padding:18px 24px 90px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:26px;align-items:start}
+
+.day{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.day:first-child{margin-top:0}
+.story{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--sky);border-radius:8px;padding:12px 15px;margin-bottom:7px}
+.story.cursor{box-shadow:0 0 0 2px var(--blue)}
+.story.filed{border-left-width:6px}
+.story-top{display:flex;gap:13px}
+.story-body{flex:1;min-width:0}
+.story-meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.story-meta .also{color:var(--blue)}
+.age{padding:1px 6px;border-radius:4px;background:var(--paper)}
+.age.stale{background:#fdecec;color:#b83f42}
+.story h2{font-family:var(--display);font-weight:600;font-size:16px;line-height:1.3;margin:0 0 4px}
+.story h2 a{text-decoration:none}
+.story h2 a:hover{color:var(--blue);text-decoration:underline}
+.story p.sum{margin:0;color:var(--muted);font-size:13.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.thumb{width:78px;height:58px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--paper)}
+
+.buckets{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.bkt{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:5px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.bkt:hover{border-color:currentColor}
+.bkt.on{color:#fff;border-color:transparent}
+.bkt .k{opacity:.55;margin-right:5px}
+.bkt.suggested{border-style:dashed;border-color:var(--yellow);color:#a8762b}
+
+.blurb{margin-top:9px;display:flex;gap:8px;align-items:flex-start}
+.blurb textarea{flex:1;font:inherit;font-size:14px;line-height:1.5;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:#fffdf8;color:var(--ink);resize:vertical;min-height:62px}
+.blurb textarea::placeholder{color:#9aa6ba}
+.count{font-family:var(--mono);font-size:10px;color:var(--muted);width:34px;text-align:right;padding-top:10px}
+
+.rail{position:sticky;top:70px;display:grid;gap:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.panel-head{background:var(--navy);color:#fff;padding:11px 14px;font-family:var(--mono);font-size:11px;letter-spacing:.11em;text-transform:uppercase;display:flex;justify-content:space-between}
+.tally{padding:5px}
+.tally-row{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;font-size:13.5px;cursor:pointer}
+.tally-row:hover{background:var(--paper)}
+.tally-row i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.tally-row span{flex:1}
+.tally-row b{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted)}
+.tally-row.empty b{opacity:.35}
+.actions{padding:11px;border-top:1px solid var(--line);display:grid;gap:7px}
+.action{font-family:var(--display);font-weight:600;font-size:13px;padding:9px;border-radius:7px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer}
+.action.ghost{background:transparent;color:var(--navy)}
+.action:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+.action:disabled{opacity:.35;cursor:not-allowed}
+.keys{font-family:var(--mono);font-size:10.5px;line-height:1.95;color:var(--muted);padding:11px 13px}
+.keys kbd{background:var(--card);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;font:inherit;color:var(--ink)}
+
+.empty{text-align:center;padding:56px 20px;color:var(--muted)}
+.empty b{display:block;font-family:var(--display);font-size:16px;color:var(--ink);margin-bottom:5px}
+mark{background:var(--yellow);color:var(--navy);padding:0 2px;border-radius:2px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:999px;font-family:var(--display);font-weight:500;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:60}
+.toast.show{opacity:1}
+
+@media (max-width:940px){
+  .wrap{grid-template-columns:1fr;padding:14px 14px 60px}
+  .rail{position:static}
+  .thumb{display:none}
+  .keys{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <h1 class="wordmark">The Wire<span>.</span></h1>
+    <p class="standfirst" id="standfirst"></p>
+  </div>
+  <div class="health" id="health"></div>
+</header>
+
+<div class="controls">
+  <div class="controls-in">
+    <input id="search" type="search" placeholder="Filter — a street, a name, a business" autocomplete="off">
+    <button class="pill" id="hideFiled" aria-pressed="false">Hide filed</button>
+    <div id="pills" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="feed"></div>
+
+  <aside class="rail">
+    <div class="panel">
+      <div class="panel-head"><span>Today's issue</span><span id="totalFiled">0</span></div>
+      <div class="tally" id="tally"></div>
+      <div class="actions">
+        <button class="action" id="copyNotion" disabled>Copy for Notion</button>
+        <button class="action ghost" id="copyLinks" disabled>Copy links only</button>
+        <button class="action ghost" id="reset" disabled>Clear the board</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="keys">
+        <kbd>j</kbd> <kbd>k</kbd> move<br>
+        <kbd>1</kbd>–<kbd>6</kbd> file to a bucket<br>
+        <kbd>0</kbd> unfile &nbsp; <kbd>b</kbd> write the blurb<br>
+        <kbd>o</kbd> open &nbsp; <kbd>/</kbd> search &nbsp; <kbd>esc</kbd> back
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = __WIRE_DATA__;
+
+/* -------------------------------------------------------------------------
+   YOUR BUCKETS. Edit freely — the order here sets the keyboard number and the
+   order they export in. The "match" words only auto-SUGGEST a bucket (dashed
+   yellow outline). Nothing files itself.
+   ------------------------------------------------------------------------- */
+const BUCKETS = [
+  {id:'main',      label:'Main story',   color:'#dc5b5e', match:[]},
+  {id:'business',  label:'Local business', color:'#3c67b1', match:['restaurant','opens','opening','closes','closing','shut down','expansion','expands','hiring','layoff','retail','store','shop','brewery','cafe','coffee','franchise','developer','development','construction','apartment','warehouse','manufactur','spirit aero','textron','koch','airbus','economic','jobs','storefront','grand opening']},
+  {id:'startup',   label:'Startup',      color:'#4f9d84', match:['startup','start-up','founder','co-founder','raises','raised $','seed round','series a','venture','accelerator','incubator','pitch competition','e-commerce','groover labs','innovation campus']},
+  {id:'nonprofit', label:'Nonprofit',    color:'#8a6fb0', match:['nonprofit','non-profit','charity','foundation','donation','donate','volunteer','fundrais','united way','food bank','shelter','habitat for humanity','ministry','outreach','grant to','awarded a grant','goodwill','ymca','boys & girls']},
+  {id:'civic',     label:'Civic',        color:'#fcc172', match:['city council','council','city hall','county commission','sedgwick county','mayor','ordinance','zoning','budget','election','ballot','vote','school board','usd 259','legislature','statehouse','police department','fire department','public works','bond issue','property tax','district attorney','court']},
+  {id:'local',     label:'Local (catch-all)', color:'#6aa1d6', match:[]},
+];
+const BY_ID = Object.fromEntries(BUCKETS.map(b => [b.id, b]));
+
+/* Which bucket wins when a headline matches more than one. Most specific
+   first — "council approves new store" should read as civic, not business. */
+const PRECEDENCE = ['startup','nonprofit','civic','business'];
+
+const PALETTE = ['#3c67b1','#dc5b5e','#fcc172','#6aa1d6','#152742','#8a6fb0','#4f9d84','#c98a4b'];
+const sources = [...new Set(DATA.stories.map(s => s.source))].sort();
+const srcColor = {};
+sources.forEach((s,i) => srcColor[s] = PALETTE[i % PALETTE.length]);
+
+DATA.stories.forEach((s,i) => { s.id = 'w' + i; s.suggest = suggestBucket(s); });
+
+const KEY = 'wire-board-v1';
+let board = {};
+let active = new Set(sources);
+let query = '', cursor = 0, hideFiled = false, visible = [];
+
+try { board = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (err) { board = {}; }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(board)); } catch (err) {} }
+
+function suggestBucket(s){
+  const hay = (s.title + ' ' + (s.summary || '')).toLowerCase();
+  for (const id of PRECEDENCE){
+    if (BY_ID[id].match.some(w => hay.includes(w))) return id;
+  }
+  return null;
+}
+
+const gen = new Date(DATA.generated);
+document.getElementById('standfirst').textContent =
+  DATA.stories.length + ' stories · last ' + DATA.days + ' day' + (DATA.days === 1 ? '' : 's') +
+  ' · pulled ' + gen.toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+document.getElementById('health').innerHTML = DATA.report.map(r =>
+  '<span class="dot' + (r.ok ? '' : ' down') + '">' + esc(r.source) + (r.ok ? ' ' + r.count : ' offline') + '</span>').join('');
+
+const pills = document.getElementById('pills');
+pills.innerHTML = sources.map(s =>
+  '<button class="pill" data-src="' + esc(s) + '" aria-pressed="true">' + esc(s) + '</button>').join('');
+pills.addEventListener('click', e => {
+  const b = e.target.closest('.pill'); if (!b) return;
+  const src = b.dataset.src;
+  if (active.has(src) && active.size === sources.length) active = new Set([src]);
+  else if (active.has(src)) { active.delete(src); if (!active.size) active = new Set(sources); }
+  else active.add(src);
+  render();
+});
+document.getElementById('hideFiled').addEventListener('click', e => {
+  hideFiled = !hideFiled;
+  e.currentTarget.setAttribute('aria-pressed', hideFiled);
+  cursor = 0; render();
+});
+const search = document.getElementById('search');
+search.addEventListener('input', () => { query = search.value.trim().toLowerCase(); cursor = 0; render(); });
+
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function highlight(t){
+  const safe = esc(t); if (!query) return safe;
+  try { return safe.replace(new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')','ig'), '<mark>$1</mark>'); }
+  catch (err) { return safe; }
+}
+function ageLabel(iso){
+  if (!iso) return {text:'undated', stale:true};
+  const h = (Date.now() - new Date(iso)) / 3600e3;
+  if (h < 1) return {text:'just now', stale:false};
+  if (h < 24) return {text:Math.round(h) + 'h ago', stale:false};
+  const d = Math.round(h / 24);
+  return {text:d + 'd ago', stale:d > 3};
+}
+function dayLabel(iso){
+  if (!iso) return 'Undated';
+  const d = new Date(iso), now = new Date(), y = new Date(); y.setDate(y.getDate() - 1);
+  if (d.toDateString() === now.toDateString()) return 'Today';
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'});
+}
+
+function render(){
+  [...pills.children].forEach(b => b.setAttribute('aria-pressed', active.has(b.dataset.src)));
+
+  visible = DATA.stories.filter(s => {
+    if (!active.has(s.source)) return false;
+    if (hideFiled && board[s.id]) return false;
+    if (!query) return true;
+    return (s.title + ' ' + s.summary + ' ' + s.source).toLowerCase().includes(query);
+  });
+
+  const feed = document.getElementById('feed');
+  if (!visible.length){
+    feed.innerHTML = '<div class="empty"><b>Nothing left here.</b>Clear the keyword, turn a source back on, or unhide what you filed.</div>';
+    renderTally(); return;
+  }
+
+  let html = '', lastDay = null;
+  visible.forEach((s, i) => {
+    const day = dayLabel(s.published);
+    if (day !== lastDay){ html += '<div class="day">' + esc(day) + '</div>'; lastDay = day; }
+    const filed = board[s.id];
+    const age = ageLabel(s.published);
+    const spine = filed ? BY_ID[filed.bucket].color : srcColor[s.source];
+
+    html +=
+    '<article class="story' + (filed ? ' filed' : '') + '" data-i="' + i + '" data-id="' + s.id + '" style="border-left-color:' + spine + '">' +
+      '<div class="story-top">' +
+        (s.image ? '<img class="thumb" src="' + esc(s.image) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
+        '<div class="story-body">' +
+          '<div class="story-meta">' +
+            '<span style="color:' + srcColor[s.source] + '">' + esc(s.source) + '</span>' +
+            '<span class="age' + (age.stale ? ' stale' : '') + '">' + esc(age.text) + '</span>' +
+            (s.also && s.also.length ? '<span class="also">also in ' + esc(s.also.join(', ')) + '</span>' : '') +
+          '</div>' +
+          '<h2><a href="' + esc(s.link) + '" target="_blank" rel="noopener">' + highlight(s.title) + '</a></h2>' +
+          (s.summary ? '<p class="sum">' + highlight(s.summary) + '</p>' : '') +
+          '<div class="buckets">' + BUCKETS.map((b, bi) => {
+            const on = filed && filed.bucket === b.id;
+            const sug = !filed && s.suggest === b.id;
+            return '<button class="bkt' + (on ? ' on' : '') + (sug ? ' suggested' : '') + '" data-file="' + b.id + '"' +
+              (on ? ' style="background:' + b.color + '"' : '') + '>' +
+              '<span class="k">' + (bi + 1) + '</span>' + esc(b.label) + '</button>';
+          }).join('') + '</div>' +
+        '</div>' +
+      '</div>' +
+      (filed ?
+        '<div class="blurb">' +
+          '<textarea data-blurb="' + s.id + '" placeholder="Write the blurb…">' + esc(filed.blurb || '') + '</textarea>' +
+          '<span class="count">' + (filed.blurb || '').length + '</span>' +
+        '</div>' : '') +
+    '</article>';
+  });
+  feed.innerHTML = html;
+  paintCursor();
+  renderTally();
+}
+
+function renderTally(){
+  const counts = {};
+  Object.values(board).forEach(v => counts[v.bucket] = (counts[v.bucket] || 0) + 1);
+  const total = Object.keys(board).length;
+  document.getElementById('totalFiled').textContent = total;
+  document.getElementById('tally').innerHTML = BUCKETS.map(b =>
+    '<div class="tally-row' + (counts[b.id] ? '' : ' empty') + '" data-jump="' + b.id + '">' +
+      '<i style="background:' + b.color + '"></i><span>' + esc(b.label) + '</span><b>' + (counts[b.id] || 0) + '</b></div>').join('');
+  ['copyNotion','copyLinks','reset'].forEach(id => document.getElementById(id).disabled = !total);
+}
+
+function file(story, bucketId){
+  if (!story) return;
+  const cur = board[story.id];
+  if (cur && cur.bucket === bucketId){ delete board[story.id]; }
+  else {
+    board[story.id] = {
+      bucket: bucketId,
+      blurb: cur ? cur.blurb : '',
+      title: story.title, link: story.link, source: story.source, published: story.published
+    };
+  }
+  save(); render();
+}
+
+document.getElementById('feed').addEventListener('click', e => {
+  const btn = e.target.closest('[data-file]');
+  if (btn){
+    const card = btn.closest('.story');
+    file(DATA.stories.find(s => s.id === card.dataset.id), btn.dataset.file);
+    return;
+  }
+  const card = e.target.closest('.story');
+  if (card && !e.target.closest('a') && !e.target.closest('textarea')){
+    cursor = +card.dataset.i; paintCursor();
+  }
+});
+
+document.getElementById('feed').addEventListener('input', e => {
+  const ta = e.target.closest('[data-blurb]'); if (!ta) return;
+  if (board[ta.dataset.blurb]){ board[ta.dataset.blurb].blurb = ta.value; save(); }
+  const c = ta.parentElement.querySelector('.count');
+  if (c) c.textContent = ta.value.length;
+});
+
+document.getElementById('tally').addEventListener('click', e => {
+  const row = e.target.closest('[data-jump]'); if (!row) return;
+  const id = Object.keys(board).find(k => board[k].bucket === row.dataset.jump);
+  if (!id) return;
+  const el = document.querySelector('.story[data-id="' + id + '"]');
+  if (el) el.scrollIntoView({block:'center'});
+});
+
+function grouped(){
+  return BUCKETS.map(b => ({
+    bucket: b,
+    items: Object.values(board).filter(v => v.bucket === b.id)
+  })).filter(g => g.items.length);
+}
+function asNotion(){
+  return grouped().map(g =>
+    '## ' + g.bucket.label + '\n\n' +
+    g.items.map(i => '**' + i.title + '**\n' + i.link + '\n' + (i.blurb ? i.blurb + '\n' : '')).join('\n')
+  ).join('\n');
+}
+function asLinks(){
+  return grouped().map(g => g.bucket.label + '\n' + g.items.map(i => i.link).join('\n')).join('\n\n');
+}
+function copy(text, msg){
+  navigator.clipboard.writeText(text).then(() => toast(msg))
+    .catch(() => toast('Copy blocked — select the text manually'));
+}
+document.getElementById('copyNotion').addEventListener('click', () =>
+  copy(asNotion(), 'Copied ' + Object.keys(board).length + ' stories'));
+document.getElementById('copyLinks').addEventListener('click', () => copy(asLinks(), 'Copied links'));
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('Clear every filed story and blurb? This cannot be undone.')) return;
+  board = {}; save(); render(); toast('Board cleared');
+});
+
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function paintCursor(){
+  document.querySelectorAll('.story').forEach(el => el.classList.remove('cursor'));
+  const el = document.querySelector('.story[data-i="' + cursor + '"]');
+  if (el){ el.classList.add('cursor'); el.scrollIntoView({block:'nearest'}); }
+}
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')){ if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  if (e.key === '/'){ e.preventDefault(); search.focus(); return; }
+  if (e.key === 'j'){ e.preventDefault(); cursor = Math.min(cursor + 1, visible.length - 1); paintCursor(); }
+  if (e.key === 'k'){ e.preventDefault(); cursor = Math.max(cursor - 1, 0); paintCursor(); }
+  if (e.key === 'o' || e.key === 'Enter'){ if (visible[cursor]) window.open(visible[cursor].link, '_blank', 'noopener'); }
+  if (e.key >= '1' && e.key <= String(BUCKETS.length)){
+    e.preventDefault(); file(visible[cursor], BUCKETS[+e.key - 1].id);
+  }
+  if (e.key === '0'){
+    e.preventDefault();
+    const s = visible[cursor];
+    if (s && board[s.id]){ delete board[s.id]; save(); render(); }
+  }
+  if (e.key === 'b'){
+    e.preventDefault();
+    const s = visible[cursor]; if (!s || !board[s.id]) return;
+    const ta = document.querySelector('[data-blurb="' + s.id + '"]');
+    if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }
+});
+
+render();
+</script>
+</body>
+</html>

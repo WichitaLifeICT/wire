@@ -1,0 +1,12 @@
+# Netlify builds the page itself. Simple, but it depends on Netlify's build
+# image shipping Python 3.9+. If the build fails on a syntax error, use the
+# GitHub Actions workflow instead and set Netlify's command to `echo skip`.
+[build]
+  command = "python3 wichita_wire.py --days 3 --out dist/index.html"
+  publish = "dist"
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
+
+# The page is only useful fresh. Trigger rebuilds from a schedule —
+# Netlify build hook, or the workflow in .github/workflows/wire.yml.
